@@ -2,7 +2,7 @@ const url = new URL(location.href);
 const movieId = url.searchParams.get("id");
 const movieTitle = url.searchParams.get("title");
 
-const APILINK = "https://c7103c49-9f2b-4771-93f1-1edf5936b01a-00-1t9min9lfhmwo.worf.replit.dev/api/v1/reviews";
+const APILINK = "https://c7103c49-9f2b-4771-93f1-1edf5936b01a-00-1t9min9lfhmwo.worf.replit.dev/api/v1/reviews/";
 
 const main = document.getElementById("section");
 const title = document.getElementById("title");
@@ -12,25 +12,52 @@ title.innerText = movieTitle;
 returnReviews(APILINK)
 
 function returnReviews(url) {
-  fetch(url + "/movie/" + movieId).then(res => res.json()).then(function(data) {
-    console.log(data);
-    data.forEach(review => {
-      const div_card = document.createElement('div');
-      div_card.innerHTML = `
-        <div class="row">
-          <div class="column">
-            <div class="card" id="${review._id}">
-              <p><strong>Review: </strong>${review.review}</p>
-              <p><strong>User: </strong>${review.user}</p>
-              <p><a href="#" onclick="editReview('${review._id}', '${review.review}', '${review.user}')">✏️</a> <a href="#" onClick="deleteReview('${review._id}')">🗑️</a></p>
-             </div>
-          </div>
-        </div>
-      `
-      main.appendChild(div_card);
+  fetch(url + "/movie/" + movieId)
+    .then(res => {
+      // Yanıtın başarılı olup olmadığını kontrol et
+      if (!res.ok) {
+        throw new Error(`HTTP Hatası! status: ${res.status}`);
+      }
+      return res.json();
     })
-  });
+    .then(function(data) {
+      console.log("Veri:", data);
+
+      if (data.length === 0) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.textContent = "Bu film için henüz yorum yapılmamış.";
+        main.appendChild(emptyMessage);
+        return;
+      }
+
+      data.forEach(review => {
+        const div_card = document.createElement('div');
+        div_card.classList.add('card-container');
+        div_card.innerHTML = `
+          <div class="row">
+            <div class="column">
+              <div class="card" id="${review._id}">
+                <p><strong>Review: </strong>${review.review}</p>
+                <p><strong>User: </strong>${review.user}</p>
+                <p>
+                  <a href="#" onclick="editReview('${review._id}', '${review.review}', '${review.user}')">✏️</a> 
+                  <a href="#" onClick="deleteReview('${review._id}')">🗑️</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+        main.appendChild(div_card);
+      });
+    })
+    .catch(error => {
+      console.error('Veri çekerken hata oluştu:', error);
+      const errorMessage = document.createElement('p');
+      errorMessage.textContent = "Yorumlar yüklenemedi. Daha sonra tekrar deneyin.";
+      main.appendChild(errorMessage);
+    });
 }
+
 
 function editReview(id, review, user) {
   
